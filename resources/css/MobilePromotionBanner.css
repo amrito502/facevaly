@@ -1,0 +1,25 @@
+#mobile_promotion_section {
+    width: 100%;
+    padding: 10px 12px 12px;
+    box-sizing: border-box;
+    background: transparent;
+}
+
+.mobile_promotion_link {
+    display: block;
+    width: 100%;
+    text-decoration: none;
+}
+
+.mobile_promotion_image {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 14px;
+}
+
+@media (min-width: 768px) {
+    #mobile_promotion_section {
+        display: none;
+    }
+}

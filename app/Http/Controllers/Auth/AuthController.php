@@ -127,7 +127,7 @@ public function login(Request $request)
             ]
         );
 
-        // $this->smsService->sendOtp($data['country_code'], $phone, $otp);
+        $this->smsService->sendOtp($data['country_code'], $phone, $otp);
 
         session([
             'register.country_code' => $data['country_code'],
@@ -169,7 +169,7 @@ public function login(Request $request)
             ]
         );
 
-        // $this->smsService->sendOtp($countryCode, $phone, $otp);
+        $this->smsService->sendOtp($countryCode, $phone, $otp);
 
         session([
             'register.otp_expires_at' => $expiresAt->toIso8601String(),

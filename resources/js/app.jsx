@@ -1,5 +1,15 @@
 import './bootstrap'
 import '../css/app.css'
+import '../css/layout.css'
+import '../css/MobileBannerSlider.css'
+import '../css/MobileCategorySlider.css'
+import '../css/MobilePromotionBanner.css'
+import '../css/MobileFlashSaleSection.css'
+import '../css/MobilePopularCategorySlider.css'
+import '../css/MobileCategoryProductFeed.css'
+
+
+
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { createInertiaApp } from '@inertiajs/react'
