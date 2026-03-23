@@ -16,6 +16,11 @@ use App\Http\Controllers\Seller\SellerDashboardController;
 
 use App\Http\Controllers\Auth\SellerRegisterController;
 
+ 
+
+Route::get('/seller/page', function () {
+    return Inertia::render('Seller/Home/Index');
+})->name('seller.page');
 
 Route::middleware('guest')->group(function () {
     Route::get('/become-seller', [SellerRegisterController::class, 'showRegister'])
