@@ -1,8 +1,8 @@
- * {
+ /* * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
+} */
 
 :root {
   --primary: #f85606;
@@ -22,7 +22,7 @@
   --desktop-fixed-total: 120px;
 }
 
-html,
+/* html,
 body,
 #app {
   min-height: 100%;
@@ -55,7 +55,7 @@ button {
 img {
   display: block;
   max-width: 100%;
-}
+} */
 
 .app-container {
   width: 100%;
