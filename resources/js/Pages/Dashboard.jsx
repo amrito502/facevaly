@@ -5,6 +5,7 @@ import { router } from '@inertiajs/react'
 export default function Dashboard() {
   return (
     <div>
+      <h3>this is a desktop pages</h3>
       <h1>Dashboard Page</h1>
       <button
         onClick={() => router.post('/logout')}
@@ -12,6 +13,8 @@ export default function Dashboard() {
       >
         Logout
       </button>
+
+
     </div>
   );
 }

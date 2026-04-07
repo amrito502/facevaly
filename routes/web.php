@@ -16,8 +16,49 @@ use App\Http\Controllers\Seller\SellerDashboardController;
 
 use App\Http\Controllers\Auth\SellerRegisterController;
 
+use App\Http\Controllers\Admin\CategoryController;
+
+use App\Http\Controllers\Admin\BrandController;
+
+use App\Http\Controllers\Admin\ProductController;
+
+use App\Http\Controllers\Seller\UnitController;
+
+Route::middleware(['auth'])->prefix('seller')->name('seller.')->group(function () {
+    Route::get('/products/index', [App\Http\Controllers\Seller\ProductController::class, 'index'])->name('products.index');
+    Route::get('/products/create', [App\Http\Controllers\Seller\ProductController::class, 'create'])->name('products.create');
+    Route::post('/products', [App\Http\Controllers\Seller\ProductController::class, 'store'])->name('products.store');
+
+    Route::post('/units', [UnitController::class, 'store'])->name('units.store');
+});
+ 
  
 
+// Route::middleware(['auth'])
+//     ->prefix('seller')
+//     ->name('seller.')
+//     ->group(function () {
+//         Route::resource('products', App\Http\Controllers\Seller\ProductController::class);
+//     });
+
+Route::prefix('products')->group(function () {
+    Route::get('/', [App\Http\Controllers\Frontend\ProductController::class, 'index'])->name('products.index');
+    Route::get('/{product:slug}', [App\Http\Controllers\Frontend\ProductController::class, 'show'])->name('products.show');
+});
+
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+    Route::resource('products', ProductController::class);
+});
+
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+    Route::resource('brands', BrandController::class);
+});
+
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+    Route::resource('categories', CategoryController::class);
+});
+
+ 
 Route::get('/seller/page', function () {
     return Inertia::render('Seller/Home/Index');
 })->name('seller.page');
@@ -40,6 +81,9 @@ Route::middleware('guest')->group(function () {
 
     Route::post('/become-seller/step-4', [SellerRegisterController::class, 'step4'])
         ->name('seller.register.step4');
+
+    Route::post('/become-seller/step-5', [SellerRegisterController::class, 'step5'])
+        ->name('seller.register.step5');
 });
 
 Route::middleware('auth')->group(function () {

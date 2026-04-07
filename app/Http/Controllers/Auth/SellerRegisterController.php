@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\PhoneOtp;
+use App\Models\Shop;
 use App\Models\User;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -41,19 +44,29 @@ class SellerRegisterController extends Controller
             $step = 4;
         }
 
-        return Inertia::render('Auth/SellerRegister', [
+        if (
+            session('seller_register.otp_verified') === true &&
+            session()->has('seller_register.password') &&
+            session()->has('seller_register.full_name') &&
+            session()->has('seller_register.email')
+        ) {
+            $step = 5;
+        }
+
+        return Inertia::render('Seller/Home/Index', [
             'currentStep' => $step,
             'otpExpiresAt' => session('seller_register.otp_expires_at'),
             'sellerSession' => [
                 'country_code' => session('seller_register.country_code', '+880'),
                 'phone' => session('seller_register.phone', ''),
                 'otp_verified' => session('seller_register.otp_verified', false),
-                'password_saved' => session()->has('seller_register.password'),
-                'referral_code' => session('seller_register.referral_code', ''),
-                'shop_name' => session('seller_register.shop_name', ''),
-                'owner_name' => session('seller_register.owner_name', ''),
-                'owner_phone' => session('seller_register.owner_phone', ''),
-                'whatsapp_number' => session('seller_register.whatsapp_number', ''),
+
+                'full_name' => session('seller_register.full_name', ''),
+                'email' => session('seller_register.email', ''),
+
+                'business_name' => session('seller_register.business_name', ''),
+                'website_url' => session('seller_register.website_url', ''),
+                'address' => session('seller_register.address', ''),
             ],
             'flash' => [
                 'success' => session('success'),
@@ -114,11 +127,11 @@ class SellerRegisterController extends Controller
 
         session()->forget([
             'seller_register.password',
-            'seller_register.referral_code',
-            'seller_register.shop_name',
-            'seller_register.owner_name',
-            'seller_register.owner_phone',
-            'seller_register.whatsapp_number',
+            'seller_register.full_name',
+            'seller_register.email',
+            'seller_register.business_name',
+            'seller_register.website_url',
+            'seller_register.address',
         ]);
 
         return redirect()
@@ -230,7 +243,6 @@ class SellerRegisterController extends Controller
     {
         $data = $request->validate([
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'referral_code' => ['nullable', 'string', 'max:100'],
         ]);
 
         if (session('seller_register.otp_verified') !== true) {
@@ -241,7 +253,6 @@ class SellerRegisterController extends Controller
 
         session([
             'seller_register.password' => Hash::make($data['password']),
-            'seller_register.referral_code' => $data['referral_code'],
         ]);
 
         return redirect()
@@ -252,10 +263,8 @@ class SellerRegisterController extends Controller
     public function step4(Request $request)
     {
         $data = $request->validate([
-            'shop_name' => ['required', 'string', 'max:255'],
-            'owner_name' => ['required', 'string', 'max:255'],
-            'owner_phone' => ['required', 'string', 'max:20'],
-            'whatsapp_number' => ['nullable', 'string', 'max:20'],
+            'full_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
         ]);
 
         if (session('seller_register.otp_verified') !== true) {
@@ -268,6 +277,42 @@ class SellerRegisterController extends Controller
             return redirect()
                 ->route('seller.register')
                 ->with('error', 'Please set password first.');
+        }
+
+        session([
+            'seller_register.full_name' => $data['full_name'],
+            'seller_register.email' => $data['email'],
+        ]);
+
+        return redirect()
+            ->route('seller.register')
+            ->with('success', 'Personal information saved successfully.');
+    }
+
+    public function step5(Request $request)
+    {
+        $data = $request->validate([
+            'business_name' => ['required', 'string', 'max:255'],
+            'website_url' => ['required', 'string', 'max:255'],
+            'address' => ['required', 'string', 'max:1000'],
+        ]);
+
+        if (session('seller_register.otp_verified') !== true) {
+            return redirect()
+                ->route('seller.register')
+                ->with('error', 'Please verify OTP first.');
+        }
+
+        if (! session()->has('seller_register.password')) {
+            return redirect()
+                ->route('seller.register')
+                ->with('error', 'Please set password first.');
+        }
+
+        if (! session()->has('seller_register.full_name') || ! session()->has('seller_register.email')) {
+            return redirect()
+                ->route('seller.register')
+                ->with('error', 'Please complete personal information first.');
         }
 
         $countryCode = session('seller_register.country_code');
@@ -285,24 +330,30 @@ class SellerRegisterController extends Controller
 
         $user = DB::transaction(function () use ($data, $countryCode, $phone) {
             $user = User::create([
-                'name' => $data['owner_name'],
-                'full_name' => $data['owner_name'],
-                'email' => null,
+                'name' => session('seller_register.full_name'),
+                'full_name' => session('seller_register.full_name'),
+                'email' => session('seller_register.email'),
                 'country_code' => $countryCode,
                 'phone' => $phone,
                 'phone_verified_at' => now(),
                 'password' => session('seller_register.password'),
-
-                'shop_name' => $data['shop_name'],
-                'owner_name' => $data['owner_name'],
-                'owner_phone' => preg_replace('/\D+/', '', $data['owner_phone']),
-                'whatsapp_number' => $data['whatsapp_number']
-                    ? preg_replace('/\D+/', '', $data['whatsapp_number'])
-                    : null,
-                'referral_code' => session('seller_register.referral_code') ?: null,
             ]);
 
-            $user->assignRole('seller');
+            if (method_exists($user, 'assignRole')) {
+                $user->assignRole('seller');
+            }
+
+            Shop::create([
+                'seller_id' => $user->id,
+                'shop_name' => $data['business_name'],
+                'slug' => $this->generateUniqueSlug($data['business_name']),
+                'website_url' => $data['website_url'],
+                'address' => $data['address'],
+                'shop_email' => session('seller_register.email'),
+                'shop_phone' => $countryCode . $phone,
+                'status' => 'draft',
+                'verification_status' => 'pending',
+            ]);
 
             return $user;
         });
@@ -314,5 +365,19 @@ class SellerRegisterController extends Controller
 
         return redirect('/seller/dashboard')
             ->with('success', 'Seller account created successfully.');
+    }
+
+    private function generateUniqueSlug(string $name): string
+    {
+        $baseSlug = Str::slug($name);
+        $slug = $baseSlug ?: 'shop';
+        $counter = 1;
+
+        while (Shop::where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 }

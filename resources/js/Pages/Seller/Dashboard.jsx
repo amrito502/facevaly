@@ -158,9 +158,42 @@ export default function ShopNiraDashboardClone() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const toggleMenu = (title) => {
     setOpenMenus((prev) => ({ ...prev, [title]: !prev[title] }));
+  };
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+
+    try {
+      setLoggingOut(true);
+
+      const token = document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute("content");
+
+      const response = await fetch("/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": token || "",
+          Accept: "application/json",
+        },
+        credentials: "same-origin",
+      });
+
+      if (!response.ok) {
+        throw new Error("Logout failed");
+      }
+
+      window.location.href = "/";
+    } catch (error) {
+      console.error(error);
+      setLoggingOut(false);
+      alert("Logout failed. Please try again.");
+    }
   };
 
   useEffect(() => {
@@ -311,9 +344,13 @@ export default function ShopNiraDashboardClone() {
               <User className="h-4 w-4 text-gray-500" />
               Profile
             </button>
-            <button className="flex w-full items-center gap-2 px-4 py-3 text-sm transition-colors duration-200 hover:bg-gray-50">
+            <button
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="flex w-full items-center gap-2 px-4 py-3 text-sm transition-colors duration-200 hover:bg-gray-50 disabled:opacity-60"
+            >
               <LogOut className="h-4 w-4 text-gray-500" />
-              Log Out
+              {loggingOut ? "Logging out..." : "Log Out"}
             </button>
           </div>
         </div>
@@ -336,8 +373,12 @@ export default function ShopNiraDashboardClone() {
                 Your account is under review. Please wait for activation by
                 <span className="font-semibold text-gray-800"> Govaly Authority.</span>
               </p>
-              <button className="inline-flex items-center rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-lg active:scale-95">
-                <span>Logout</span>
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="inline-flex items-center rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-lg active:scale-95 disabled:opacity-60"
+              >
+                <span>{loggingOut ? "Logging out..." : "Logout"}</span>
                 <LogOut className="ml-2 h-4 w-4" />
               </button>
             </div>

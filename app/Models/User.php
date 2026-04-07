@@ -27,6 +27,9 @@ class User extends Authenticatable
         'owner_phone',
         'whatsapp_number',
         'referral_code',
+        'full_name',
+    'website_url',
+    'address',
     ];
 
     protected $hidden = [
@@ -38,4 +41,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'phone_verified_at' => 'datetime',
     ];
+
+    public function addresses()
+{
+    return $this->hasMany(\App\Models\Address::class);
+}
 }

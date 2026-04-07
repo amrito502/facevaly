@@ -218,18 +218,16 @@
             <li class="treeview">
                 <a href="#">
                     <i class="fa fa-cogs"></i>
-                    <span>Settings</span>
+                    <span>User Access Control</span>
                     <span class="pull-right-container">
                         <i class="fa fa-angle-left pull-right"></i>
                     </span>
                 </a>
                 <ul class="treeview-menu">
-                    <li><a href="#"><i class="fa fa-circle-o"></i> General Settings</a></li>
-                    <li><a href="#"><i class="fa fa-circle-o"></i> Store Settings</a></li>
-                    <li><a href="#"><i class="fa fa-circle-o"></i> Payment Settings</a></li>
-                    <li><a href="#"><i class="fa fa-circle-o"></i> Shipping Settings</a></li>
-                    <li><a href="#"><i class="fa fa-circle-o"></i> Email Settings</a></li>
-                    <li><a href="#"><i class="fa fa-circle-o"></i> SEO Settings</a></li>
+                    <li><a href="{{ url('/permissions') }}"><i class="fa fa-circle-o"></i> Permissions</a></li>
+                    <li><a href="{{ url('/roles') }}"><i class="fa fa-circle-o"></i> Assign Role</a></li>
+                    <li><a href="#"><i class="fa fa-circle-o"></i> Users</a></li>
+                    
                 </ul>
             </li>
         </ul>

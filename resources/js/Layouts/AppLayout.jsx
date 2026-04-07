@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import { Toaster } from "react-hot-toast";
 
 export default function AppLayout({ children }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -127,6 +128,7 @@ export default function AppLayout({ children }) {
 
   return (
     <>
+    <Toaster position="top-right" />
       <div className="app-layout-shell">
         {/* Desktop Fixed Header */}
         <div className="desktop-only desktop-fixed-header-wrap">

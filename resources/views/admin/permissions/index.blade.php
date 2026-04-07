@@ -1,82 +1,118 @@
 @extends('admin.master')
 
 @section('content')
-<div class="container-fluid py-4">
-    <div class="container">
+<style>
+    /* Fix for admin template shrinking Tailwind UI */
+    .permissions-page {
+        font-size: 16px !important;
+    }
 
-        {{-- Page Header --}}
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    .permissions-page table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .permissions-page th,
+    .permissions-page td {
+        vertical-align: middle;
+    }
+
+    .permissions-page .table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+</style>
+
+<div class="permissions-page min-h-screen bg-gray-100 py-8">
+    <div class="w-full px-4 md:px-6 lg:px-8">
+
+        <!-- Header -->
+        <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-                <h1 class="h3 mb-1 text-dark fw-bold">Permissions</h1>
-                <p class="mb-0 text-muted">Create and manage permissions</p>
+                <h1 class="text-[30px] font-bold text-gray-900 leading-tight">
+                    Permissions
+                </h1>
+                <p class="mt-1 text-[15px] text-gray-500">
+                    Create and manage permissions
+                </p>
             </div>
 
             <div>
-                <a href="{{ route('permissions.create') }}" class="btn btn-info text-white px-4">
-                    <i class="fa-solid fa-plus me-2"></i>New Permission
+                <a href="{{ route('permissions.create') }}"
+                   class="inline-flex items-center rounded-[12px] bg-sky-600 px-5 py-3 text-[15px] font-semibold text-white shadow hover:bg-sky-700 transition">
+                    <i class="fa-solid fa-plus mr-2"></i>
+                    New Permission
                 </a>
             </div>
         </div>
 
-        {{-- Main Card --}}
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <!-- Card -->
+        <div class="rounded-[18px] border border-gray-200 bg-white shadow-sm">
 
-            {{-- Search Area --}}
-            <div class="card-header bg-white border-bottom px-3 px-md-4 py-3">
-                <form method="GET" class="row align-items-center g-3">
-
-                    <div class="col-12 col-md">
-                        <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
-
-                            <div class="input-group" style="max-width: 320px;">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="fa-solid fa-magnifying-glass text-muted"></i>
-                                </span>
-                                <input type="text"
-                                       name="q"
-                                       value="{{ request('q') }}"
-                                       placeholder="Search..."
-                                       class="form-control border-start-0"
-                                       style="box-shadow: none;">
-                            </div>
-
-                            <button type="submit" class="btn btn-outline-secondary px-3">
-                                <i class="fa-solid fa-search me-1"></i>Search
-                            </button>
+            <!-- Search -->
+            <div class="border-b border-gray-200 px-4 py-4 md:px-6">
+                <form method="GET" class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-center">
+                        <div class="relative w-full md:w-[350px]">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                            <input type="text"
+                                   name="q"
+                                   value="{{ request('q') }}"
+                                   placeholder="Search permissions..."
+                                   class="h-[48px] w-full rounded-[12px] border border-gray-300 bg-white pl-11 pr-4 text-[15px] text-gray-700 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200">
                         </div>
+
+                        <button type="submit"
+                                class="inline-flex h-[48px] items-center justify-center rounded-[12px] border border-gray-300 bg-white px-5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 transition">
+                            <i class="fa-solid fa-search mr-2"></i>
+                            Search
+                        </button>
                     </div>
 
-                    <div class="col-12 col-md-auto text-md-end">
-                        <span class="badge bg-primary-subtle text-primary fs-6 px-3 py-2">
+                    <div>
+                        <span class="inline-flex items-center rounded-full bg-sky-100 px-4 py-2 text-[14px] font-semibold text-sky-700">
                             Total: {{ $permissions->total() }}
                         </span>
                     </div>
                 </form>
             </div>
 
-            {{-- Desktop Table --}}
-            <div class="table-responsive d-none d-md-block">
-                <table class="table align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="px-4 py-3 text-uppercase small text-muted">Name</th>
-                            <th class="px-4 py-3 text-uppercase small text-muted text-end">Actions</th>
+            <!-- Table -->
+            <div class="table-scroll">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr class="border-b border-gray-200">
+                            <th class="px-6 py-4 text-left text-[14px] font-semibold uppercase tracking-wide text-gray-600">
+                                Name
+                            </th>
+                            <th class="px-6 py-4 text-left text-[14px] font-semibold uppercase tracking-wide text-gray-600">
+                                ID
+                            </th>
+                            <th class="px-6 py-4 text-right text-[14px] font-semibold uppercase tracking-wide text-gray-600">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
-                    <tbody>
+
+                    <tbody class="bg-white">
                         @forelse($permissions as $permission)
-                            <tr>
-                                <td class="px-4 py-3">
-                                    <div class="fw-semibold text-dark">{{ $permission->name }}</div>
-                                    <small class="text-muted">
-                                        <i class="fa-solid fa-hashtag me-1"></i>ID: {{ $permission->id }}
-                                    </small>
+                            <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                                <td class="px-6 py-4 text-[15px] font-semibold text-gray-900">
+                                    {{ $permission->name }}
                                 </td>
-                                <td class="px-4 py-3 text-end">
-                                    <div class="d-inline-flex gap-2">
+
+                                <td class="px-6 py-4 text-[14px] text-gray-500">
+                                    #{{ $permission->id }}
+                                </td>
+
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-wrap items-center justify-end gap-2">
                                         <a href="{{ route('permissions.edit', $permission) }}"
-                                           class="btn btn-sm btn-outline-primary">
-                                            <i class="fa-solid fa-pen-to-square me-1"></i>Edit
+                                           class="inline-flex items-center rounded-[10px] border border-sky-200 bg-sky-50 px-4 py-2 text-[14px] font-medium text-sky-700 hover:bg-sky-100 transition">
+                                            <i class="fa-solid fa-pen-to-square mr-2"></i>
+                                            Edit
                                         </a>
 
                                         <form method="POST"
@@ -85,8 +121,10 @@
                                             @csrf
                                             @method('DELETE')
 
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <i class="fa-solid fa-trash me-1"></i>Delete
+                                            <button type="submit"
+                                                    class="inline-flex items-center rounded-[10px] border border-red-200 bg-red-50 px-4 py-2 text-[14px] font-medium text-red-700 hover:bg-red-100 transition">
+                                                <i class="fa-solid fa-trash mr-2"></i>
+                                                Delete
                                             </button>
                                         </form>
                                     </div>
@@ -94,8 +132,9 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="2" class="text-center py-5 text-muted">
-                                    <i class="fa-regular fa-folder-open me-2"></i>No permissions found.
+                                <td colspan="3" class="px-6 py-10 text-center text-[15px] text-gray-500">
+                                    <i class="fa-regular fa-folder-open mr-2"></i>
+                                    No permissions found.
                                 </td>
                             </tr>
                         @endforelse
@@ -103,45 +142,8 @@
                 </table>
             </div>
 
-            {{-- Mobile Cards --}}
-            <div class="d-block d-md-none bg-white">
-                @forelse($permissions as $permission)
-                    <div class="border-bottom p-3">
-                        <div class="mb-2">
-                            <div class="fw-semibold text-dark">{{ $permission->name }}</div>
-                            <small class="text-muted">
-                                <i class="fa-solid fa-hashtag me-1"></i>ID: {{ $permission->id }}
-                            </small>
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('permissions.edit', $permission) }}"
-                               class="btn btn-sm btn-outline-primary w-50">
-                                <i class="fa-solid fa-pen-to-square me-1"></i>Edit
-                            </a>
-
-                            <form method="POST"
-                                  action="{{ route('permissions.destroy', $permission) }}"
-                                  class="w-50"
-                                  onsubmit="return confirm('Delete this permission?');">
-                                @csrf
-                                @method('DELETE')
-
-                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">
-                                    <i class="fa-solid fa-trash me-1"></i>Delete
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                @empty
-                    <div class="p-4 text-center text-muted">
-                        <i class="fa-regular fa-folder-open me-2"></i>No permissions found.
-                    </div>
-                @endforelse
-            </div>
-
-            {{-- Pagination --}}
-            <div class="card-footer bg-white border-top px-3 px-md-4 py-3">
+            <!-- Pagination -->
+            <div class="border-t border-gray-200 px-4 py-4 md:px-6">
                 {{ $permissions->withQueryString()->links() }}
             </div>
         </div>

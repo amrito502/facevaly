@@ -7,12 +7,15 @@ import FacevalyHeroBanner from '../Components/FacevalyHeroBanner'
 import FacevalyCtaBanner from '../Components/FacevalyCtaBanner'
 import FacevalyTopBar from '../Components/FacevalyTopBar'
 import FacevalyFaqSection from '../Components/FacevalyFaqSection'
+import { Toaster } from "react-hot-toast"
 
 export default function Index() {
   return (
     <div>
+      <Toaster position="top-right" />
       <FacevalyTopBar />
       <FacevalyHeroBanner />
+      {/* <SellerRegister /> */}
         
       <FeatureCardsSection />
          <FacevalyStepsSection />
