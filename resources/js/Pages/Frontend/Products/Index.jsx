@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Link, router } from "@inertiajs/react";
 import AppLayout from "@/Layouts/AppLayout";
 
-/* ⭐ Rating Component */
 function StarRating() {
   return (
     <div className="flex items-center gap-0.5 text-sm text-yellow-400">
@@ -15,16 +14,38 @@ function StarRating() {
   );
 }
 
-/* 🛒 Product Card */
 function ProductCard({ product }) {
+  const [adding, setAdding] = useState(false);
   const finalPrice = product.sale_price ?? product.price;
+
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (adding) return;
+
+    setAdding(true);
+
+    router.post(
+      "/cart",
+      {
+        product_id: product.id,
+        quantity: 1,
+      },
+      {
+        preserveScroll: true,
+        preserveState: true,
+        only: ["cartCount", "flash", "errors"],
+        onFinish: () => setAdding(false),
+      }
+    );
+  };
 
   return (
     <Link
       href={`/products/${product.slug}`}
       className="group block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
     >
-      {/* Image */}
       <div className="aspect-square overflow-hidden bg-gray-100">
         <img
           loading="lazy"
@@ -37,22 +58,20 @@ function ProductCard({ product }) {
         />
       </div>
 
-      {/* Content */}
       <div className="p-3">
         <h3 className="line-clamp-2 min-h-[48px] text-[15px] font-medium text-gray-800">
           {product.name}
         </h3>
 
-        {/* Price */}
         <div className="mt-2 flex items-center gap-2">
           <span className="text-lg font-bold text-orange-500">
-            ৳{finalPrice}
+            ৳{Number(finalPrice).toFixed(2)}
           </span>
 
           {product.sale_price && product.discount_percent ? (
             <>
               <span className="text-sm text-gray-400 line-through">
-                ৳{product.price}
+                ৳{Number(product.price).toFixed(2)}
               </span>
               <span className="text-sm text-gray-500">
                 -{product.discount_percent}%
@@ -61,19 +80,26 @@ function ProductCard({ product }) {
           ) : null}
         </div>
 
-        {/* Rating */}
         <div className="mt-2 flex items-center gap-1">
           <StarRating />
           <span className="text-xs text-gray-500">
             ({product.reviews_count ?? 0})
           </span>
         </div>
+
+        <button
+          type="button"
+          onClick={handleAddToCart}
+          disabled={adding}
+          className="mt-3 w-full rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600 disabled:opacity-60"
+        >
+          {adding ? "Adding..." : "Add to Cart"}
+        </button>
       </div>
     </Link>
   );
 }
 
-/* 📦 Main Page */
 function Index({ products, filters }) {
   const [search, setSearch] = useState(filters?.q || "");
 
@@ -84,6 +110,7 @@ function Index({ products, filters }) {
       "/products",
       { q: search },
       {
+        preserveScroll: true,
         preserveState: true,
         replace: true,
       }
@@ -93,11 +120,9 @@ function Index({ products, filters }) {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="mx-auto max-w-7xl px-4">
-        {/* Header */}
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Products</h1>
 
-          {/* Search */}
           <form onSubmit={handleSearch} className="flex w-full max-w-md gap-2">
             <input
               type="text"
@@ -115,7 +140,6 @@ function Index({ products, filters }) {
           </form>
         </div>
 
-        {/* Products */}
         {products?.data?.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             {products.data.map((product) => (
@@ -128,14 +152,19 @@ function Index({ products, filters }) {
           </div>
         )}
 
-        {/* Pagination */}
         {products?.links?.length > 0 && (
           <div className="mt-8 flex flex-wrap gap-2">
             {products.links.map((link, index) => (
               <button
                 key={index}
                 disabled={!link.url}
-                onClick={() => link.url && router.visit(link.url)}
+                onClick={() =>
+                  link.url &&
+                  router.visit(link.url, {
+                    preserveScroll: true,
+                    preserveState: true,
+                  })
+                }
                 dangerouslySetInnerHTML={{ __html: link.label }}
                 className={`rounded-md px-3 py-2 text-sm ${
                   link.active
@@ -151,7 +180,6 @@ function Index({ products, filters }) {
   );
 }
 
-/* Layout */
 Index.layout = (page) => <AppLayout>{page}</AppLayout>;
 
 export default Index;

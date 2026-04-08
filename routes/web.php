@@ -1,28 +1,44 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\BrandController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\SellerLoginController;
+
+use App\Http\Controllers\Auth\SellerRegisterController;
+use App\Http\Controllers\Frontend\CartController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
+
 use App\Http\Controllers\RolePermissionController;
+
 use App\Http\Controllers\RoleUserController;
+
+use App\Http\Controllers\Seller\SellerDashboardController;
+
+use App\Http\Controllers\Seller\UnitController;
+
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-use App\Http\Controllers\Auth\AdminLoginController;
-use App\Http\Controllers\Auth\SellerLoginController;
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Seller\SellerDashboardController;
 
-use App\Http\Controllers\Auth\SellerRegisterController;
+Route::controller(CartController::class)->group(function () {
+    Route::get('/cart', 'index')->name('cart.index');
+    Route::post('/cart', 'store')->name('cart.store');
+    Route::patch('/cart/{cart}', 'update')->name('cart.update');
+    Route::delete('/cart/{cart}', 'destroy')->name('cart.destroy');
+    Route::delete('/cart', 'bulkDestroy')->name('cart.bulk-destroy');
+});
 
-use App\Http\Controllers\Admin\CategoryController;
+Route::controller(App\Http\Controllers\Frontend\ProductController::class)->group(function () {
+    Route::get('/products', 'index')->name('products.index');
+    Route::get('/products/{product:slug}', 'show')->name('products.show');
+});
 
-use App\Http\Controllers\Admin\BrandController;
-
-use App\Http\Controllers\Admin\ProductController;
-
-use App\Http\Controllers\Seller\UnitController;
 
 Route::middleware(['auth'])->prefix('seller')->name('seller.')->group(function () {
     Route::get('/products/index', [App\Http\Controllers\Seller\ProductController::class, 'index'])->name('products.index');
@@ -41,14 +57,11 @@ Route::middleware(['auth'])->prefix('seller')->name('seller.')->group(function (
 //         Route::resource('products', App\Http\Controllers\Seller\ProductController::class);
 //     });
 
-Route::prefix('products')->group(function () {
-    Route::get('/', [App\Http\Controllers\Frontend\ProductController::class, 'index'])->name('products.index');
-    Route::get('/{product:slug}', [App\Http\Controllers\Frontend\ProductController::class, 'show'])->name('products.show');
-});
+ 
 
-Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
-    Route::resource('products', ProductController::class);
-});
+// Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+//     Route::resource('products', ProductController::class);
+// });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     Route::resource('brands', BrandController::class);

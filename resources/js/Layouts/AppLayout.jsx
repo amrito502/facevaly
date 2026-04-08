@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useEffect } from "react";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
+import { Link, usePage } from "@inertiajs/react";
+ 
 
 export default function AppLayout({ children }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -14,6 +16,8 @@ export default function AppLayout({ children }) {
   const [showSignupModal, setShowSignupModal] = useState(false);
 
   const [mobileCompactHeader, setMobileCompactHeader] = useState(false);
+
+  const { cartCount = 0, flash = {} } = usePage().props;
 
   const menuData = useMemo(
     () => [
@@ -126,9 +130,16 @@ export default function AppLayout({ children }) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (flash?.success) {
+      toast.success(flash.success);
+    }
+  }, [flash]);
+
   return (
     <>
-    <Toaster position="top-right" />
+      <Toaster position="top-right" />
+
       <div className="app-layout-shell">
         {/* Desktop Fixed Header */}
         <div className="desktop-only desktop-fixed-header-wrap">
@@ -169,7 +180,9 @@ export default function AppLayout({ children }) {
                 )}
               </div>
 
-              <a href="#" className="topbar-link">BECOME A SELLER</a>
+              <a href="#" className="topbar-link">
+                BECOME A SELLER
+              </a>
 
               <div
                 className="topbar-item has-popup"
@@ -275,10 +288,14 @@ export default function AppLayout({ children }) {
 
           <header className="desktop-header">
             <div className="app-container desktop-header-inner">
-              <a href="#" className="desktop-brand">
-                <img src="/frontend/logo.png" alt="Facevaly Logo" className="brand-logo-img" />
+              <Link href="/" className="desktop-brand">
+                <img
+                  src="/frontend/logo.png"
+                  alt="Facevaly Logo"
+                  className="brand-logo-img"
+                />
                 <span className="brand-text">Facevaly</span>
-              </a>
+              </Link>
 
               <div className="desktop-search">
                 <input type="text" placeholder="Search in Facevaly" />
@@ -287,20 +304,38 @@ export default function AppLayout({ children }) {
                 </button>
               </div>
 
-              <button className="desktop-cart-btn" type="button" aria-label="Cart">
+              <Link
+                href="/cart"
+                className="desktop-cart-btn relative"
+                aria-label="Cart"
+              >
                 <i className="bi bi-cart3"></i>
-              </button>
+
+                {cartCount > 0 && (
+                  <span className="absolute -right-2 -top-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-orange-500 px-1 text-xs font-bold text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
             </div>
           </header>
         </div>
 
         {/* Mobile Header */}
-        <div className={`mobile-only mobile-header ${mobileCompactHeader ? "compact" : ""}`}>
+        <div
+          className={`mobile-only mobile-header ${
+            mobileCompactHeader ? "compact" : ""
+          }`}
+        >
           <div className="mobile-header-inner">
             <div className="mobile-app-download-bar">
               <div className="mobile-app-left">
                 <div className="mobile-app-logo-box">
-                  <img src="/frontend/logo.png" alt="Facevaly Logo" className="mobile-app-logo" />
+                  <img
+                    src="/frontend/logo.png"
+                    alt="Facevaly Logo"
+                    className="mobile-app-logo"
+                  />
                 </div>
 
                 <div className="mobile-app-text">
@@ -335,7 +370,11 @@ export default function AppLayout({ children }) {
             <div className="footer-brand-col">
               <div className="footer-brand">
                 <div className="footer-logo-box">
-                  <img src="/frontend/logo.png" alt="Facevaly Logo" className="footer-logo-img" />
+                  <img
+                    src="/frontend/logo.png"
+                    alt="Facevaly Logo"
+                    className="footer-logo-img"
+                  />
                 </div>
 
                 <div>
@@ -367,11 +406,21 @@ export default function AppLayout({ children }) {
 
             <div className="footer-links-col">
               <h4>Social Links</h4>
-              <a href="#"><i className="bi bi-facebook"></i> Facebook</a>
-              <a href="#"><i className="bi bi-instagram"></i> Instagram</a>
-              <a href="#"><i className="bi bi-tiktok"></i> TikTok</a>
-              <a href="#"><i className="bi bi-youtube"></i> YouTube</a>
-              <a href="#"><i className="bi bi-whatsapp"></i> WhatsApp</a>
+              <a href="#">
+                <i className="bi bi-facebook"></i> Facebook
+              </a>
+              <a href="#">
+                <i className="bi bi-instagram"></i> Instagram
+              </a>
+              <a href="#">
+                <i className="bi bi-tiktok"></i> TikTok
+              </a>
+              <a href="#">
+                <i className="bi bi-youtube"></i> YouTube
+              </a>
+              <a href="#">
+                <i className="bi bi-whatsapp"></i> WhatsApp
+              </a>
             </div>
           </div>
 
@@ -379,7 +428,7 @@ export default function AppLayout({ children }) {
         </footer>
 
         {/* Mobile Bottom Nav */}
-        <div className="  mobile-bottom-nav">
+        <div className="mobile-bottom-nav">
           <button className="mobile-nav-item active" type="button">
             <i className="bi bi-house-door"></i>
             <span>Home</span>
@@ -394,10 +443,16 @@ export default function AppLayout({ children }) {
             <span>Category</span>
           </button>
 
-          <button className="mobile-nav-item" type="button">
+          <Link href="/cart" className="mobile-nav-item relative">
             <i className="bi bi-cart3"></i>
             <span>Cart</span>
-          </button>
+
+            {cartCount > 0 && (
+              <span className="absolute right-4 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white">
+                {cartCount}
+              </span>
+            )}
+          </Link>
 
           <button className="mobile-nav-item" type="button">
             <i className="bi bi-chat-dots"></i>
@@ -416,7 +471,9 @@ export default function AppLayout({ children }) {
         onClick={() => setMobileSidebarOpen(false)}
       ></div>
 
-      <aside className={`mobile-sidebar-drawer ${mobileSidebarOpen ? "show" : ""}`}>
+      <aside
+        className={`mobile-sidebar-drawer ${mobileSidebarOpen ? "show" : ""}`}
+      >
         <div className="mobile-sidebar-header">
           <h3>Categories</h3>
           <button type="button" onClick={() => setMobileSidebarOpen(false)}>
@@ -492,12 +549,17 @@ export default function AppLayout({ children }) {
           </button>
 
           <div className="login-tab-head">
-            <button className="active" type="button">Password</button>
+            <button className="active" type="button">
+              Password
+            </button>
             <button type="button">Phone Number</button>
           </div>
 
           <div className="auth-form">
-            <input type="text" placeholder="Please enter your Phone or Email" />
+            <input
+              type="text"
+              placeholder="Please enter your Phone or Email"
+            />
             <div className="password-input-wrap">
               <input type="password" placeholder="Please enter your password" />
               <i className="bi bi-eye-slash"></i>
@@ -618,7 +680,11 @@ function AccordionItem({ item, openMenus, toggleMenu, level = 0 }) {
       >
         <span>{item.title}</span>
         {hasChildren ? (
-          <i className={`bi ${isOpen ? "bi-chevron-up" : "bi-chevron-down"}`}></i>
+          <i
+            className={`bi ${
+              isOpen ? "bi-chevron-up" : "bi-chevron-down"
+            }`}
+          ></i>
         ) : null}
       </button>
 
@@ -636,19 +702,28 @@ function AccordionItem({ item, openMenus, toggleMenu, level = 0 }) {
                       level={level + 1}
                     />
                   ) : (
-                    <a href="#" key={child} className={`menu-link level-${level + 1}`}>
+                    <a
+                      href="#"
+                      key={child}
+                      className={`menu-link level-${level + 1}`}
+                    >
                       {child}
                     </a>
                   )
                 )
               : item.children.map((child) => (
-                  <a href="#" key={child} className={`menu-link level-${level + 1}`}>
+                  <a
+                    href="#"
+                    key={child}
+                    className={`menu-link level-${level + 1}`}
+                  >
                     {child === "See All" ? <em>{child}</em> : child}
                   </a>
                 ))}
           </div>
         </div>
       )}
+     
     </div>
   );
 }
