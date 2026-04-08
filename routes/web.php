@@ -11,7 +11,9 @@ use App\Http\Controllers\Auth\SellerLoginController;
 
 use App\Http\Controllers\Auth\SellerRegisterController;
 use App\Http\Controllers\Frontend\CartController;
+use App\Http\Controllers\Frontend\CheckoutController;
 use App\Http\Controllers\PermissionController;
+
 use App\Http\Controllers\RoleController;
 
 use App\Http\Controllers\RolePermissionController;
@@ -21,9 +23,16 @@ use App\Http\Controllers\RoleUserController;
 use App\Http\Controllers\Seller\SellerDashboardController;
 
 use App\Http\Controllers\Seller\UnitController;
-
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+
+Route::controller(CheckoutController::class)->group(function () {
+    Route::get('/checkout', 'index')->name('checkout.index');
+    Route::post('/checkout/apply-coupon', 'applyCoupon')->name('checkout.applyCoupon');
+    Route::post('/checkout/place-order', 'store')->name('checkout.store');
+    Route::get('/order-success/{order}', 'success')->name('order.success');
+});
 
 
 Route::controller(CartController::class)->group(function () {
