@@ -17,6 +17,7 @@ function Index({
     shipping_rate_id: shippingRates[0]?.id || "",
     coupon_code: "",
     save_address: true,
+    agree_terms: true,
   });
 
   const [orderSummary, setOrderSummary] = useState({
@@ -42,12 +43,18 @@ function Index({
     }, {});
   }, [cartItems]);
 
+  const totalQuantity = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  }, [cartItems]);
+
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const recalculateForShipping = (shippingId) => {
-    const shipping = shippingRates.find((rate) => Number(rate.id) === Number(shippingId));
+    const shipping = shippingRates.find(
+      (rate) => Number(rate.id) === Number(shippingId)
+    );
     const shippingCost = Number(shipping?.shipping_cost || 0);
 
     setOrderSummary((prev) => ({
@@ -67,7 +74,7 @@ function Index({
   };
 
   const applyCoupon = async () => {
-    if (!form.coupon_code) {
+    if (!form.coupon_code?.trim()) {
       toast.error("Enter coupon code");
       return;
     }
@@ -89,7 +96,7 @@ function Index({
         }),
       });
 
-      const result = await response.json();
+      const result = await response.json().catch(() => ({}));
 
       if (!response.ok || !result.success) {
         throw new Error(result.message || "Coupon apply failed");
@@ -110,8 +117,23 @@ function Index({
   };
 
   const placeOrder = () => {
+    if (!cartItems.length) {
+      toast.error("Your cart is empty");
+      return;
+    }
+
     if (!form.name || !form.phone || !form.full_address) {
       toast.error("Name, phone and address are required");
+      return;
+    }
+
+    if (!form.shipping_rate_id) {
+      toast.error("Please select a shipping option");
+      return;
+    }
+
+    if (!form.agree_terms) {
+      toast.error("Please accept the terms and conditions");
       return;
     }
 
@@ -121,7 +143,7 @@ function Index({
         toast.success("Order placed successfully");
       },
       onError: (errors) => {
-        const firstError = Object.values(errors)[0];
+        const firstError = Object.values(errors || {})[0];
         toast.error(firstError || "Order failed");
       },
     });
@@ -134,11 +156,15 @@ function Index({
           <h1 className="mb-4 text-4xl font-semibold text-gray-800">Checkout</h1>
           <div className="mb-5 border-b"></div>
 
-          <h2 className="mb-4 text-3xl font-medium text-gray-900">Shipping Address</h2>
+          <h2 className="mb-4 text-3xl font-medium text-gray-900">
+            Shipping Address
+          </h2>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-lg text-gray-800">Your Name *</label>
+              <label className="mb-2 block text-lg text-gray-800">
+                Your Name *
+              </label>
               <input
                 type="text"
                 value={form.name}
@@ -149,7 +175,9 @@ function Index({
             </div>
 
             <div>
-              <label className="mb-2 block text-lg text-gray-800">Phone Number *</label>
+              <label className="mb-2 block text-lg text-gray-800">
+                Phone Number *
+              </label>
               <input
                 type="text"
                 value={form.phone}
@@ -174,7 +202,7 @@ function Index({
           <div className="my-6 border-b"></div>
 
           <h2 className="mb-4 text-3xl font-semibold text-gray-900">
-            Items ({cartItems.length})
+            Items ({totalQuantity})
           </h2>
 
           <div className="space-y-5">
@@ -186,7 +214,7 @@ function Index({
 
                 {items.map((item) => (
                   <div
-                    key={item.cart_id}
+                    key={item.cart_id ?? item.id ?? item.product_id}
                     className="flex items-start justify-between border-b py-4"
                   >
                     <div className="flex gap-4">
@@ -197,13 +225,27 @@ function Index({
                       />
                       <div>
                         <h3 className="text-2xl text-gray-900">{item.name}</h3>
+
+                        <div className="mt-1 text-sm text-gray-500">
+                          Unit price: ৳{Number(item.sale_price || 0).toFixed(2)}
+                        </div>
+
+                        {Number(item.seller_price || 0) > 0 &&
+                        Number(item.sale_price || 0) >
+                          Number(item.seller_price || 0) ? (
+                          <div className="text-sm text-gray-400 line-through">
+                            Base price: ৳{Number(item.seller_price).toFixed(2)}
+                          </div>
+                        ) : null}
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <div className="text-lg text-gray-700">QTY: {item.quantity}</div>
+                      <div className="text-lg text-gray-700">
+                        QTY: {item.quantity}
+                      </div>
                       <div className="text-3xl font-semibold text-gray-900">
-                        ৳{Number(item.line_total).toFixed(0)}
+                        ৳{Number(item.line_total || 0).toFixed(2)}
                       </div>
                     </div>
                   </div>
@@ -214,7 +256,9 @@ function Index({
         </div>
 
         <div className="rounded-md bg-white p-6">
-          <h2 className="mb-4 text-4xl font-medium text-gray-800">Payment Option</h2>
+          <h2 className="mb-4 text-4xl font-medium text-gray-800">
+            Payment Option
+          </h2>
 
           <div className="space-y-3">
             <label className="flex cursor-pointer items-center justify-between rounded-md border px-4 py-4">
@@ -229,7 +273,13 @@ function Index({
               <span>💵</span>
             </label>
 
-            <label className="flex cursor-pointer items-center justify-between rounded-md border border-teal-500 bg-teal-50 px-4 py-4">
+            <label
+              className={`flex cursor-pointer items-center justify-between rounded-md border px-4 py-4 ${
+                form.payment_method === "sslcommerz"
+                  ? "border-teal-500 bg-teal-50"
+                  : ""
+              }`}
+            >
               <div className="flex items-center gap-3">
                 <input
                   type="radio"
@@ -263,29 +313,46 @@ function Index({
                       <div className="text-xl text-gray-900">{rate.location}</div>
                     </div>
                   </div>
-                  <div className="text-xl font-medium">৳{Number(rate.shipping_cost).toFixed(0)}</div>
+                  <div className="text-xl font-medium">
+                    ৳{Number(rate.shipping_cost).toFixed(2)}
+                  </div>
                 </label>
               ))}
             </div>
+
+            {selectedShipping ? (
+              <div className="mt-3 text-sm text-gray-500">
+                Selected: {selectedShipping.location}
+              </div>
+            ) : null}
           </div>
 
           <div className="mt-5">
-            <h3 className="mb-4 text-4xl font-medium text-gray-900">Order summary</h3>
+            <h3 className="mb-4 text-4xl font-medium text-gray-900">
+              Order summary
+            </h3>
 
             <div className="space-y-3 text-xl">
               <div className="flex justify-between">
-                <span>Price ({cartItems.length} items)</span>
-                <span>৳{orderSummary.subtotal.toFixed(0)}</span>
+                <span>Price ({totalQuantity} items)</span>
+                <span>৳{orderSummary.subtotal.toFixed(2)}</span>
               </div>
 
               <div className="flex justify-between">
                 <span>Discount</span>
-                <span className="text-green-500">-৳{orderSummary.discount.toFixed(0)}</span>
+                <span className="text-green-500">
+                  -৳{orderSummary.discount.toFixed(2)}
+                </span>
               </div>
 
               <div className="flex justify-between">
                 <span>Shipping fee</span>
-                <span>৳{orderSummary.shipping_cost.toFixed(0)}</span>
+                <span>৳{orderSummary.shipping_cost.toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Tax</span>
+                <span>৳{orderSummary.tax.toFixed(2)}</span>
               </div>
             </div>
 
@@ -310,11 +377,15 @@ function Index({
 
             <div className="mb-5 flex items-center justify-between text-3xl font-bold">
               <span>Total</span>
-              <span>৳{orderSummary.total.toFixed(0)}</span>
+              <span>৳{orderSummary.total.toFixed(2)}</span>
             </div>
 
             <label className="mb-5 flex items-start gap-3 text-base text-gray-700">
-              <input type="checkbox" defaultChecked />
+              <input
+                type="checkbox"
+                checked={form.agree_terms}
+                onChange={(e) => updateField("agree_terms", e.target.checked)}
+              />
               <span>
                 I have read and agree to the Terms and Conditions, Privacy Policy,
                 and Refund and Return Policy.
@@ -324,7 +395,12 @@ function Index({
             <button
               type="button"
               onClick={placeOrder}
-              className="w-full rounded-md bg-slate-400 px-4 py-4 text-2xl font-semibold text-white hover:bg-slate-500"
+              disabled={!cartItems.length}
+              className={`w-full rounded-md px-4 py-4 text-2xl font-semibold text-white ${
+                !cartItems.length
+                  ? "cursor-not-allowed bg-slate-300"
+                  : "bg-slate-400 hover:bg-slate-500"
+              }`}
             >
               Place Order
             </button>

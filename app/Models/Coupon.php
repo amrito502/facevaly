@@ -21,6 +21,11 @@ class Coupon extends Model
         'expiry_date' => 'date',
     ];
 
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
     public function isValidForAmount($amount): bool
     {
         if ($this->status !== 'active') {

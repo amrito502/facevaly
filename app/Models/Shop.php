@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Shop extends Model
 {
@@ -26,18 +25,33 @@ class Shop extends Model
         'is_featured',
     ];
 
-    public function seller(): BelongsTo
+    protected $casts = [
+        'commission_rate' => 'decimal:2',
+        'rating_avg' => 'decimal:2',
+        'is_featured' => 'boolean',
+    ];
+        public function brands()
+    {
+        return $this->hasMany(\App\Models\Brand::class);
+    }
+
+    public function seller()
     {
         return $this->belongsTo(User::class, 'seller_id');
     }
 
-    public function brands()
-{
-    return $this->hasMany(\App\Models\Brand::class);
-}
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
 
-public function products()
-{
-    return $this->hasMany(\App\Models\Product::class);
-}
+    public function subOrders()
+    {
+        return $this->hasMany(SubOrder::class);
+    }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
 }

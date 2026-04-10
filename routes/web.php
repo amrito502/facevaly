@@ -72,13 +72,12 @@ Route::middleware(['auth'])->prefix('seller')->name('seller.')->group(function (
 //     Route::resource('products', ProductController::class);
 // });
 
-Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
-    Route::resource('brands', BrandController::class);
-});
 
-Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+    Route::resource('brands', BrandController::class);
+
+
     Route::resource('categories', CategoryController::class);
-});
+
 
  
 Route::get('/seller/page', function () {

@@ -33,7 +33,7 @@ class CartController extends Controller
         return $this->cartQuery($request)
             ->select(['id', 'user_id', 'session_id', 'product_id', 'quantity', 'created_at'])
             ->with([
-                'product:id,shop_id,name,slug,regular_price,discounted_price,status',
+                'product:id,shop_id,name,slug,seller_price,sale_price,status,stock_qty',
                 'product.media' => function ($query) {
                     $query->select(['id', 'product_id', 'file_path', 'is_primary', 'sort_order'])
                         ->orderByDesc('is_primary')
@@ -52,13 +52,13 @@ class CartController extends Controller
 
                 $primaryImage = $product->media->first();
 
-                $price = (float) ($product->regular_price ?? 0);
-                $salePrice = $product->discounted_price !== null
-                    ? (float) $product->discounted_price
-                    : null;
-
-                $finalPrice = $salePrice ?? $price;
+                $sellerPrice = (float) ($product->seller_price ?? 0);
+                $salePrice = (float) ($product->sale_price ?? 0);
                 $quantity = (int) $cart->quantity;
+
+                $markupAmount = max(0, $salePrice - $sellerPrice);
+                $lineSellerTotal = $sellerPrice * $quantity;
+                $lineSaleTotal = $salePrice * $quantity;
 
                 return [
                     'id' => (int) $cart->id,
@@ -69,11 +69,12 @@ class CartController extends Controller
                     'image' => $primaryImage?->file_path
                         ? asset('storage/' . $primaryImage->file_path)
                         : asset('images/no-image.png'),
-                    'price' => $price,
+                    'seller_price' => $sellerPrice,
                     'sale_price' => $salePrice,
-                    'final_price' => $finalPrice,
+                    'markup_amount' => $markupAmount,
                     'quantity' => $quantity,
-                    'line_total' => $finalPrice * $quantity,
+                    'line_seller_total' => $lineSellerTotal,
+                    'line_total' => $lineSaleTotal,
                 ];
             })
             ->filter()
@@ -86,7 +87,7 @@ class CartController extends Controller
 
         return [
             'cartItems' => $items,
-            'cartCount' => $items->sum('quantity'),
+            'cartCount' => (int) $items->sum('quantity'),
             'cartSubtotal' => (float) $items->sum('line_total'),
         ];
     }
@@ -124,16 +125,20 @@ class CartController extends Controller
         ]);
 
         $product = Product::query()
-            ->select(['id', 'status', 'stock_qty'])
+            ->select(['id', 'status', 'stock_qty', 'sale_price'])
             ->findOrFail($validated['product_id']);
 
         if ($product->status !== 'active') {
             return $this->errorResponse('Product is not available.');
         }
 
+        if ((float) ($product->sale_price ?? 0) <= 0) {
+            return $this->errorResponse('Product price is invalid.');
+        }
+
         $quantity = (int) ($validated['quantity'] ?? 1);
 
-        if ($product->stock_qty !== null && $product->stock_qty < $quantity) {
+        if (!is_null($product->stock_qty) && $product->stock_qty < $quantity) {
             return $this->errorResponse('Requested quantity is not available in stock.', [
                 'quantity' => ['Requested quantity is not available in stock.'],
             ]);
@@ -146,7 +151,7 @@ class CartController extends Controller
         if ($existing) {
             $newQty = (int) $existing->quantity + $quantity;
 
-            if ($product->stock_qty !== null && $newQty > $product->stock_qty) {
+            if (!is_null($product->stock_qty) && $newQty > $product->stock_qty) {
                 return $this->errorResponse('Stock limit exceeded.', [
                     'quantity' => ['Stock limit exceeded.'],
                 ]);
@@ -178,7 +183,7 @@ class CartController extends Controller
         ]);
 
         $product = Product::query()
-            ->select(['id', 'status', 'stock_qty'])
+            ->select(['id', 'status', 'stock_qty', 'sale_price'])
             ->find($cart->product_id);
 
         if (!$product || $product->status !== 'active') {
@@ -187,7 +192,13 @@ class CartController extends Controller
             ]);
         }
 
-        if ($product->stock_qty !== null && (int) $validated['quantity'] > $product->stock_qty) {
+        if ((float) ($product->sale_price ?? 0) <= 0) {
+            return $this->errorResponse('This product price is invalid.', [
+                'quantity' => ['This product price is invalid.'],
+            ]);
+        }
+
+        if (!is_null($product->stock_qty) && (int) $validated['quantity'] > $product->stock_qty) {
             return $this->errorResponse('Requested quantity exceeds available stock.', [
                 'quantity' => ['Requested quantity exceeds available stock.'],
             ]);

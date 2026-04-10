@@ -27,6 +27,16 @@ class Order extends Model
         'canceled_date',
     ];
 
+    protected $casts = [
+        'subtotal' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'tax' => 'decimal:2',
+        'shipping_cost' => 'decimal:2',
+        'total' => 'decimal:2',
+        'delivery_date' => 'date',
+        'canceled_date' => 'date',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -40,6 +50,11 @@ class Order extends Model
     public function shippingRate()
     {
         return $this->belongsTo(ShippingRate::class);
+    }
+
+    public function subOrders()
+    {
+        return $this->hasMany(SubOrder::class);
     }
 
     public function items()

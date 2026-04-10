@@ -4,13 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Category extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     protected $fillable = [
         'parent_id',
@@ -18,26 +15,27 @@ class Category extends Model
         'slug',
         'icon',
         'image',
+        'commission_rate',
         'is_active',
         'sort_order',
     ];
 
     protected $casts = [
+        'commission_rate' => 'decimal:2',
         'is_active' => 'boolean',
-        'sort_order' => 'integer',
     ];
 
-    public function parent(): BelongsTo
+    public function parent()
     {
         return $this->belongsTo(Category::class, 'parent_id');
     }
 
-    public function children(): HasMany
+    public function children()
     {
         return $this->hasMany(Category::class, 'parent_id');
     }
 
-    public function products(): HasMany
+    public function products()
     {
         return $this->hasMany(Product::class);
     }

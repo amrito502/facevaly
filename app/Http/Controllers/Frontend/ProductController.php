@@ -22,8 +22,10 @@ class ProductController extends Controller
                 'slug',
                 'sku',
                 'barcode',
-                'regular_price',
-                'discounted_price',
+                'seller_price',
+                'sale_price',
+                'markup_rate',
+                'markup_amount',
                 'rating_avg',
                 'rating_count',
                 'status',
@@ -53,15 +55,12 @@ class ProductController extends Controller
             ->through(function ($product) {
                 $primaryImage = $product->media->first();
 
-                $basePrice = (float) ($product->regular_price ?? 0);
-                $salePrice = $product->discounted_price !== null
-                    ? (float) $product->discounted_price
-                    : null;
+                $price = (float) ($product->sale_price ?? 0);
+                $sellerPrice = (float) ($product->seller_price ?? 0);
 
-                $discountPercent = null;
-
-                if ($salePrice !== null && $basePrice > 0 && $salePrice < $basePrice) {
-                    $discountPercent = round((($basePrice - $salePrice) / $basePrice) * 100);
+                $markupPercent = null;
+                if ($sellerPrice > 0 && $price > $sellerPrice) {
+                    $markupPercent = round((($price - $sellerPrice) / $sellerPrice) * 100);
                 }
 
                 return [
@@ -69,9 +68,9 @@ class ProductController extends Controller
                     'name' => $product->name,
                     'slug' => $product->slug,
                     'sku' => $product->sku,
-                    'price' => $basePrice,
-                    'sale_price' => $salePrice,
-                    'discount_percent' => $discountPercent,
+                    'price' => $price,
+                    'seller_price' => $sellerPrice,
+                    'markup_percent' => $markupPercent,
                     'image' => $primaryImage?->file_path
                         ? asset('storage/' . $primaryImage->file_path)
                         : asset('images/no-image.png'),
@@ -101,8 +100,8 @@ class ProductController extends Controller
                     ->orderBy('sort_order');
             },
             'brand:id,name',
-            'shop:id,shop_name',
-            'category:id,name',
+            'shop:id,shop_name,commission_rate',
+            'category:id,name,commission_rate',
         ]);
 
         $similarProducts = Product::query()
@@ -112,8 +111,8 @@ class ProductController extends Controller
                 'shop_id',
                 'name',
                 'slug',
-                'regular_price',
-                'discounted_price',
+                'seller_price',
+                'sale_price',
                 'rating_avg',
                 'rating_count',
                 'status',
@@ -136,14 +135,12 @@ class ProductController extends Controller
             ->map(function ($item) {
                 $primaryImage = $item->media->first();
 
-                $price = (float) ($item->regular_price ?? 0);
-                $salePrice = $item->discounted_price !== null
-                    ? (float) $item->discounted_price
-                    : null;
+                $price = (float) ($item->sale_price ?? 0);
+                $sellerPrice = (float) ($item->seller_price ?? 0);
 
-                $discountPercent = null;
-                if ($salePrice !== null && $price > 0 && $salePrice < $price) {
-                    $discountPercent = round((($price - $salePrice) / $price) * 100);
+                $markupPercent = null;
+                if ($sellerPrice > 0 && $price > $sellerPrice) {
+                    $markupPercent = round((($price - $sellerPrice) / $sellerPrice) * 100);
                 }
 
                 return [
@@ -151,8 +148,8 @@ class ProductController extends Controller
                     'name' => $item->name,
                     'slug' => $item->slug,
                     'price' => $price,
-                    'sale_price' => $salePrice,
-                    'discount_percent' => $discountPercent,
+                    'seller_price' => $sellerPrice,
+                    'markup_percent' => $markupPercent,
                     'image' => $primaryImage?->file_path
                         ? asset('storage/' . $primaryImage->file_path)
                         : asset('images/no-image.png'),
@@ -168,10 +165,8 @@ class ProductController extends Controller
                 'name' => $product->name,
                 'slug' => $product->slug,
                 'description' => $product->description,
-                'price' => (float) ($product->regular_price ?? 0),
-                'sale_price' => $product->discounted_price !== null
-                    ? (float) $product->discounted_price
-                    : null,
+                'price' => (float) ($product->sale_price ?? 0),
+                'seller_price' => (float) ($product->seller_price ?? 0),
                 'brand' => $product->brand?->name,
                 'shop' => $product->shop?->shop_name,
                 'category' => $product->category?->name,

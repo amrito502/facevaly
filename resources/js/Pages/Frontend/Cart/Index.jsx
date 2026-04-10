@@ -96,7 +96,8 @@ function Index({ cartItems = [] }) {
         ? {
             ...i,
             quantity: newQty,
-            line_total: Number(i.final_price) * newQty,
+            line_seller_total: Number(i.seller_price) * newQty,
+            line_total: Number(i.sale_price) * newQty,
           }
         : i
     );
@@ -177,7 +178,7 @@ function Index({ cartItems = [] }) {
 
   const selectedSubTotal = useMemo(() => {
     return selectedItems.reduce((sum, item) => {
-      return sum + Number(item.final_price) * Number(item.quantity);
+      return sum + Number(item.line_total || 0);
     }, 0);
   }, [selectedItems]);
 
@@ -290,17 +291,18 @@ function Index({ cartItems = [] }) {
                     <div className="flex items-center justify-between gap-4 md:justify-end">
                       <div className="text-right">
                         <div className="text-2xl font-semibold text-gray-900">
-                          ৳ {Number(item.final_price).toFixed(2)}
+                          ৳ {Number(item.sale_price || 0).toFixed(2)}
                         </div>
 
-                        {item.sale_price ? (
+                        {Number(item.seller_price || 0) > 0 &&
+                        Number(item.sale_price || 0) > Number(item.seller_price || 0) ? (
                           <div className="text-sm text-gray-400 line-through">
-                            ৳ {Number(item.price).toFixed(2)}
+                            ৳ {Number(item.seller_price).toFixed(2)}
                           </div>
                         ) : null}
 
                         <div className="mt-1 text-sm text-gray-500">
-                          Line total: ৳ {Number(item.line_total).toFixed(2)}
+                          Line total: ৳ {Number(item.line_total || 0).toFixed(2)}
                         </div>
                       </div>
 
@@ -352,7 +354,11 @@ function Index({ cartItems = [] }) {
 
             <Link
               href="/checkout"
-              className="block w-full rounded-lg bg-orange-500 px-4 py-3 text-center text-sm font-medium text-white hover:bg-orange-600"
+              className={`block w-full rounded-lg px-4 py-3 text-center text-sm font-medium text-white ${
+                selectedItems.length === 0
+                  ? "pointer-events-none bg-gray-300"
+                  : "bg-orange-500 hover:bg-orange-600"
+              }`}
             >
               Proceed to Checkout
             </Link>

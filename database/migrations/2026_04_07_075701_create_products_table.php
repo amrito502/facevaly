@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
@@ -25,7 +26,17 @@ return new class extends Migration {
             $table->longText('description')->nullable();
             $table->longText('specification')->nullable();
 
+            // seller/admin pricing model
             $table->decimal('purchase_price', 12, 2)->default(0);
+            $table->decimal('seller_price', 12, 2)->default(0);   // seller base price
+            $table->decimal('sale_price', 12, 2)->default(0);     // admin/customer sale price
+            $table->decimal('markup_rate', 5, 2)->nullable();     // optional
+            $table->decimal('markup_amount', 12, 2)->default(0);  // optional snapshot/display
+
+            // optional product wise commission
+            $table->decimal('commission_rate', 5, 2)->nullable();
+
+            // old pricing support if needed
             $table->decimal('regular_price', 12, 2)->nullable();
             $table->decimal('discounted_price', 12, 2)->nullable();
 
@@ -45,6 +56,7 @@ return new class extends Migration {
 
             $table->enum('status', ['draft', 'pending', 'active', 'inactive', 'rejected'])->default('draft');
             $table->boolean('is_featured')->default(false);
+            $table->boolean('is_price_approved')->default(false);
 
             $table->unsignedBigInteger('view_count')->default(0);
             $table->decimal('rating_avg', 3, 2)->default(0);

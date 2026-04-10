@@ -11,4 +11,9 @@ class ShippingRate extends Model
         'shipping_cost',
         'status',
     ];
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }

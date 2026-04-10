@@ -43,7 +43,27 @@ class User extends Authenticatable
     ];
 
     public function addresses()
-{
-    return $this->hasMany(\App\Models\Address::class);
-}
+    {
+        return $this->hasMany(\App\Models\Address::class);
+    }
+
+    public function shops()
+    {
+        return $this->hasMany(Shop::class, 'seller_id');
+    }
+
+    public function subOrders()
+    {
+        return $this->hasMany(SubOrder::class, 'seller_id');
+    }
+
+    public function orderItemsAsSeller()
+    {
+        return $this->hasMany(OrderItem::class, 'seller_id');
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }

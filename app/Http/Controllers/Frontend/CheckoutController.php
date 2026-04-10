@@ -9,7 +9,9 @@ use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\ShippingRate;
+use App\Models\SubOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -26,12 +28,77 @@ class CheckoutController extends Controller
         return Cart::query()->where('session_id', $request->session()->getId());
     }
 
+    private function getGlobalCommissionRate(): float
+    {
+        return (float) (Setting::query()->value('default_commission_rate') ?? 5);
+    }
+
+    private function resolveCommissionRate(Product $product): float
+    {
+        if (!is_null($product->commission_rate)) {
+            return (float) $product->commission_rate;
+        }
+
+        if (!is_null($product->category?->commission_rate)) {
+            return (float) $product->category->commission_rate;
+        }
+
+        if (!is_null($product->shop?->commission_rate)) {
+            return (float) $product->shop->commission_rate;
+        }
+
+        return $this->getGlobalCommissionRate();
+    }
+
+    private function cartItemPayload($cart, Product $product): array
+    {
+        $image = optional(
+            $product->media->sortByDesc('is_primary')->sortBy('sort_order')->first()
+        )->file_path;
+
+        $sellerPrice = (float) ($product->seller_price ?? 0);
+        $salePrice = (float) ($product->sale_price ?? 0);
+        $qty = (int) $cart->quantity;
+
+        $lineSellerTotal = $sellerPrice * $qty;
+        $lineSaleTotal = $salePrice * $qty;
+        $markupAmount = $lineSaleTotal - $lineSellerTotal;
+
+        $commissionRate = $this->resolveCommissionRate($product);
+        $commissionAmount = ($lineSellerTotal * $commissionRate) / 100;
+
+        $sellerPayable = $lineSellerTotal - $commissionAmount;
+        $adminEarning = $markupAmount + $commissionAmount;
+
+        return [
+            'cart_id' => $cart->id,
+            'product_id' => $product->id,
+            'shop_id' => $product->shop?->id,
+            'seller_id' => $product->shop?->seller_id,
+            'shop_name' => $product->shop?->shop_name ?? 'Top Fair',
+            'name' => $product->name,
+            'slug' => $product->slug,
+            'image' => $image ? asset('storage/' . $image) : asset('images/no-image.png'),
+            'seller_price' => $sellerPrice,
+            'sale_price' => $salePrice,
+            'quantity' => $qty,
+            'line_seller_total' => $lineSellerTotal,
+            'line_sale_total' => $lineSaleTotal,
+            'markup_amount' => $markupAmount,
+            'commission_rate' => $commissionRate,
+            'commission_amount' => $commissionAmount,
+            'seller_payable' => $sellerPayable,
+            'admin_earning' => $adminEarning,
+        ];
+    }
+
     private function getCartItems(Request $request)
     {
         return $this->cartQuery($request)
             ->with([
-                'product:id,shop_id,name,slug,regular_price,discounted_price,status,stock_qty',
-                'product.shop:id,seller_id,shop_name',
+                'product:id,shop_id,category_id,name,slug,seller_price,sale_price,commission_rate,status,stock_qty',
+                'product.shop:id,seller_id,shop_name,commission_rate',
+                'product.category:id,name,commission_rate',
                 'product.media:id,product_id,file_path,is_primary,sort_order',
             ])
             ->get()
@@ -42,25 +109,7 @@ class CheckoutController extends Controller
                     return null;
                 }
 
-                $image = optional(
-                    $product->media->sortByDesc('is_primary')->sortBy('sort_order')->first()
-                )->file_path;
-
-                $price = $product->discounted_price ?? $product->regular_price;
-
-                return [
-                    'cart_id' => $cart->id,
-                    'product_id' => $product->id,
-                    'shop_id' => $product->shop?->id,
-                    'seller_id' => $product->shop?->seller_id,
-                    'shop_name' => $product->shop?->shop_name ?? 'Top Fair',
-                    'name' => $product->name,
-                    'slug' => $product->slug,
-                    'image' => $image ? asset('storage/' . $image) : asset('images/no-image.png'),
-                    'price' => (float) $price,
-                    'quantity' => (int) $cart->quantity,
-                    'line_total' => (float) $price * (int) $cart->quantity,
-                ];
+                return $this->cartItemPayload($cart, $product);
             })
             ->filter()
             ->values();
@@ -69,7 +118,8 @@ class CheckoutController extends Controller
     private function calculateSummary(Request $request, ?string $couponCode = null, ?int $shippingRateId = null): array
     {
         $cartItems = $this->getCartItems($request);
-        $subtotal = (float) $cartItems->sum('line_total');
+
+        $subtotal = (float) $cartItems->sum('line_sale_total');
         $discount = 0;
         $coupon = null;
 
@@ -228,23 +278,66 @@ class CheckoutController extends Controller
                 'phone' => $validated['phone'],
                 'full_address' => $validated['full_address'],
                 'payment_method' => $validated['payment_method'],
-                'payment_status' => 'unpaid',
+                'payment_status' => $validated['payment_method'] === 'cod' ? 'unpaid' : 'paid',
                 'status' => 'pending',
             ]);
 
-            foreach ($summary['cartItems'] as $item) {
-                OrderItem::create([
+            $grouped = $summary['cartItems']->groupBy('shop_id');
+
+            foreach ($grouped as $shopId => $items) {
+                $sellerId = $items->first()['seller_id'] ?? null;
+
+                $subSubtotal = (float) $items->sum('line_sale_total');
+                $subCommissionAmount = (float) $items->sum('commission_amount');
+                $subMarkupAmount = (float) $items->sum('markup_amount');
+                $subSellerPayable = (float) $items->sum('seller_payable');
+                $subAdminEarning = (float) $items->sum('admin_earning');
+
+                $avgCommissionRate = $subSubtotal > 0
+                    ? round(($subCommissionAmount / max(1, $items->sum('line_seller_total'))) * 100, 2)
+                    : 0;
+
+                $subOrder = SubOrder::create([
                     'order_id' => $order->id,
-                    'product_id' => $item['product_id'],
-                    'shop_id' => $item['shop_id'],
-                    'seller_id' => $item['seller_id'],
-                    'price' => $item['price'],
-                    'quantity' => $item['quantity'],
-                    'line_total' => $item['line_total'],
-                    'options' => null,
+                    'shop_id' => $shopId,
+                    'seller_id' => $sellerId,
+                    'sub_order_number' => 'SORD-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(4)),
+                    'subtotal' => $subSubtotal,
+                    'discount' => 0,
+                    'tax' => 0,
+                    'shipping_cost' => 0,
+                    'total' => $subSubtotal,
+                    'commission_rate' => $avgCommissionRate,
+                    'commission_amount' => $subCommissionAmount,
+                    'markup_amount' => $subMarkupAmount,
+                    'gateway_charge' => 0,
+                    'seller_payable' => $subSellerPayable,
+                    'admin_earning' => $subAdminEarning,
+                    'status' => 'pending',
                 ]);
 
-                Product::where('id', $item['product_id'])->decrement('stock_qty', $item['quantity']);
+                foreach ($items as $item) {
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'sub_order_id' => $subOrder->id,
+                        'product_id' => $item['product_id'],
+                        'shop_id' => $item['shop_id'],
+                        'seller_id' => $item['seller_id'],
+                        'seller_price' => $item['seller_price'],
+                        'sale_price' => $item['sale_price'],
+                        'quantity' => $item['quantity'],
+                        'line_seller_total' => $item['line_seller_total'],
+                        'line_sale_total' => $item['line_sale_total'],
+                        'markup_amount' => $item['markup_amount'],
+                        'commission_rate' => $item['commission_rate'],
+                        'commission_amount' => $item['commission_amount'],
+                        'seller_payable' => $item['seller_payable'],
+                        'admin_earning' => $item['admin_earning'],
+                        'options' => null,
+                    ]);
+
+                    Product::where('id', $item['product_id'])->decrement('stock_qty', $item['quantity']);
+                }
             }
 
             if ($coupon) {

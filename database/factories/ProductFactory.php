@@ -17,10 +17,13 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         $name = fake()->unique()->words(3, true);
-        $regularPrice = fake()->numberBetween(200, 5000);
-        $discountedPrice = fake()->boolean(60)
-            ? fake()->numberBetween(100, $regularPrice)
-            : null;
+
+        $sellerPrice = fake()->randomFloat(2, 200, 5000);
+        $markupRate = fake()->randomElement([5, 10, 15, 20, 25, 30, 40]);
+        $markupAmount = round(($sellerPrice * $markupRate) / 100, 2);
+        $salePrice = round($sellerPrice + $markupAmount, 2);
+
+        $isWholesale = fake()->boolean(40);
 
         return [
             'shop_id'            => Shop::factory(),
@@ -38,14 +41,27 @@ class ProductFactory extends Factory
             'description'        => fake()->paragraphs(3, true),
             'specification'      => fake()->paragraphs(2, true),
 
-            'purchase_price'     => fake()->randomFloat(2, 50, 2000),
-            'regular_price'      => $regularPrice,
-            'discounted_price'   => $discountedPrice,
+            'purchase_price'     => fake()->randomFloat(2, 50, max(51, $sellerPrice - 10)),
+            'seller_price'       => $sellerPrice,
+            'sale_price'         => $salePrice,
+            'markup_rate'        => $markupRate,
+            'markup_amount'      => $markupAmount,
+            'commission_rate'    => fake()->boolean(35)
+                ? fake()->randomElement([5, 8, 10, 12, 15])
+                : null,
+
+            // compatibility fields if still present in table
+            'regular_price'      => $salePrice,
+            'discounted_price'   => null,
 
             'is_retail'          => true,
-            'is_wholesale'       => fake()->boolean(40),
-            'wholesale_price'    => fake()->boolean(40) ? fake()->randomFloat(2, 100, 4000) : null,
-            'wholesale_min_qty'  => fake()->boolean(40) ? fake()->numberBetween(5, 50) : null,
+            'is_wholesale'       => $isWholesale,
+            'wholesale_price'    => $isWholesale
+                ? fake()->randomFloat(2, 100, max(101, $sellerPrice))
+                : null,
+            'wholesale_min_qty'  => $isWholesale
+                ? fake()->numberBetween(5, 50)
+                : null,
 
             'stock_qty'          => fake()->numberBetween(0, 200),
             'weight_kg'          => fake()->randomFloat(3, 0.1, 20),
@@ -58,6 +74,7 @@ class ProductFactory extends Factory
 
             'status'             => fake()->randomElement(['draft', 'pending', 'active', 'inactive', 'rejected']),
             'is_featured'        => fake()->boolean(20),
+            'is_price_approved'  => fake()->boolean(80),
 
             'view_count'         => fake()->numberBetween(0, 5000),
             'rating_avg'         => fake()->randomFloat(2, 0, 5),
