@@ -17,54 +17,54 @@ const reels = [
     id: 1,
     brand: "Pickly BD",
     title: "3 Layer Kitchen Basket Stand",
-    thumbnail: "/frontend/reels/thumb-1.jpg",
+    thumbnail: "/frontend/flashsale/1.avif",
     video: "/frontend/reals.mp4",
-    logo: "/frontend/reels/logo-1.png",
+    logo: "https://cdn-icons-png.flaticon.com/128/3163/3163209.png",
     cta: "Shop Now",
   },
   {
     id: 2,
     brand: "Quick pic",
     title: "Mini Electric Food Warmer",
-    thumbnail: "/frontend/reels/thumb-2.jpg",
+    thumbnail: "/frontend/flashsale/3.avif",
     video: "/frontend/reals-1.mp4",
-    logo: "/frontend/reels/logo-2.png",
+    logo: "https://cdn-icons-png.flaticon.com/128/3163/3163209.png",
     cta: "Shop Now",
   },
   {
     id: 3,
     brand: "Deshi Dukan",
     title: "Nivea Soft Rose Care Combo",
-    thumbnail: "/frontend/reels/thumb-3.jpg",
+    thumbnail: "/frontend/flashsale/2.avif",
     video: "/frontend/reals-3.mp4",
-    logo: "/frontend/reels/logo-3.png",
+    logo: "https://cdn-icons-png.flaticon.com/128/3163/3163209.png",
     cta: "Shop Now",
   },
   {
     id: 4,
     brand: "Bengali Vibe",
     title: "Prestige Electric Kettle",
-    thumbnail: "/frontend/reels/thumb-4.jpg",
+    thumbnail: "/frontend/flashsale/1.avif",
     video: "/frontend/reals-4.mp4",
-    logo: "/frontend/reels/logo-4.png",
+    logo: "https://cdn-icons-png.flaticon.com/128/3163/3163209.png",
     cta: "Shop Now",
   },
   {
     id: 5,
     brand: "Mybuskat",
     title: "Professional Hair Trimmer",
-    thumbnail: "/frontend/reels/thumb-5.jpg",
+    thumbnail: "/frontend/flashsale/2.avif",
     video: "/frontend/reals.mp4",
-    logo: "/frontend/reels/logo-5.png",
+    logo: "https://cdn-icons-png.flaticon.com/128/3163/3163209.png",
     cta: "Shop Now",
   },
   {
     id: 6,
     brand: "Venus Leather",
     title: "Handmade Casual Black Shoe",
-    thumbnail: "/frontend/reels/thumb-6.jpg",
+    thumbnail: "/frontend/flashsale/3.avif",
     video: "/frontend/reals-4.mp4",
-    logo: "/frontend/reels/logo-6.png",
+    logo: "https://cdn-icons-png.flaticon.com/128/3163/3163209.png",
     cta: "Shop Now",
   },
 ];
@@ -259,13 +259,13 @@ function StoryViewer({ item, onClose, onNext, onPrev, hasPrev, hasNext }) {
                   {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                 </button>
 
-                <button
+                {/* <button
                   type="button"
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition hover:bg-black/45"
                   aria-label="More options"
                 >
                   <MoreHorizontal className="h-4 w-4" />
-                </button>
+                </button> */}
 
                 <button
                   type="button"
@@ -293,22 +293,37 @@ function StoryViewer({ item, onClose, onNext, onPrev, hasPrev, hasNext }) {
             </button>
 
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                className="flex h-12 flex-1 items-center gap-2 rounded-full border border-white/35 bg-white/10 px-4 text-left text-sm text-white backdrop-blur-md transition hover:bg-white/15"
-              >
-                <MessageCircle className="h-4 w-4 shrink-0" />
-                <span className="truncate text-white/90">Send Message</span>
-              </button>
+  <form
+    onSubmit={(e) => {
+      e.preventDefault()
+      // ekhane message send korben
+    }}
+    className="flex flex-1 items-center gap-2 rounded-full border border-white/35 bg-white/10 px-4 backdrop-blur-md transition hover:bg-white/15"
+  >
+    <MessageCircle className="h-4 w-4 shrink-0 text-white" />
 
-              <button
-                type="button"
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/35 bg-white/10 text-white backdrop-blur-md transition hover:bg-white/15"
-                aria-label="Like reel"
-              >
-                <Heart className="h-5 w-5" />
-              </button>
-            </div>
+    <input
+      type="text"
+      placeholder="Send Message"
+      className="h-12 flex-1 bg-transparent text-sm text-white placeholder:text-white/70 outline-none"
+    />
+
+    <button
+      type="submit"
+      className="rounded-full bg-white/20 px-4 py-2 text-sm text-white transition hover:bg-white/30"
+    >
+      Send
+    </button>
+  </form>
+
+  <button
+    type="button"
+    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/35 bg-white/10 text-white backdrop-blur-md transition hover:bg-white/15"
+    aria-label="Like reel"
+  >
+    <Heart className="h-5 w-5" />
+  </button>
+</div>
           </div>
         </div>
 
@@ -387,10 +402,10 @@ export default function ShopReelResponsive() {
 
   return (
     <section className="mt-6 w-full">
-      <div className="mx-auto w-full max-w-[1280px] px-3 sm:px-4 lg:px-6">
+      <div className=" ">
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
-            <img src="/frontend/reels/reels-icon.png" alt="Shop Reel" className="h-full w-full object-cover" />
+            <img src="/images/shopreel.svg" alt="Shop Reel" className="h-full w-full object-cover" />
           </div>
           <h2 className="text-xl font-semibold text-slate-900 sm:text-2xl">Shop Reel</h2>
         </div>
